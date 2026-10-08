@@ -1,0 +1,10 @@
+# Conda/mamba alternative to the venv + requirements.txt route.
+#   mamba env create -f environment.yml && conda activate neural-hydrology-playground && pip install -e .
+name: neural-hydrology-playground
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - -r requirements.txt

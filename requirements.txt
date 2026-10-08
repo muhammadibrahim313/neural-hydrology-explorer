@@ -1,0 +1,26 @@
+# Exact versions that produced the results in outputs/ (macOS arm64, Python 3.13, 8 Oct 2026).
+# Install:  python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && pip install -e .
+# Looser ranges live in pyproject.toml; use these pins when you want to reproduce the numbers exactly.
+torch==2.14.1
+neuralhydrology==1.13.0
+numpy==2.5.3
+pandas==3.0.6
+scipy==1.18.1
+xarray==2026.9.0
+netCDF4==1.7.4
+numba==0.68.0
+matplotlib==3.11.2
+plotly==7.1.0
+streamlit==1.65.0
+tensorboard==2.21.0
+requests==2.34.2
+remotezip==0.12.6
+ruamel.yaml==0.19.1
+tqdm==4.70.1
+tabulate==0.10.0
+# notebooks + tests
+jupyterlab==4.6.4
+ipykernel==7.4.0
+nbconvert==7.17.1
+nbformat==5.11.1
+pytest==9.1.1

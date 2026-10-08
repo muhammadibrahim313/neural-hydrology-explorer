@@ -37,7 +37,7 @@ plt.rcParams.update(
         "axes.grid": True,
         "grid.alpha": 0.25,
         "grid.linewidth": 0.6,
-        "axes.titleweight": "semibold",
+        "axes.titleweight": "bold",
         "font.size": 10,
     }
 )
@@ -57,8 +57,14 @@ def plot_forcing_and_flow(ts: pd.DataFrame, title: str, start=None, end=None, sa
     fig, axes = plt.subplots(3, 1, figsize=(11, 7.5), sharex=True, gridspec_kw={"height_ratios": [1, 1, 1.6]})
 
     ax = axes[0]
-    ax.bar(df.index, df["prcp(mm/day)"], width=1.0, color=COLORS["rain"], linewidth=0)
-    ax.set_ylabel("Rain\n(mm/day)")
+    if len(df) > 3 * 366:
+        # thousands of daily bars would alias into a smear: show monthly totals for long windows
+        monthly = df["prcp(mm/day)"].resample("MS").sum()
+        ax.bar(monthly.index, monthly.values, width=28, align="edge", color=COLORS["rain"], linewidth=0)
+        ax.set_ylabel("Rain\n(mm/month)")
+    else:
+        ax.bar(df.index, df["prcp(mm/day)"], width=1.0, color=COLORS["rain"], linewidth=0)
+        ax.set_ylabel("Rain\n(mm/day)")
     ax.set_title(title)
     ax.invert_yaxis()  # hydrology convention: rain "falls" from the top of the panel
 
@@ -89,9 +95,15 @@ def plot_hydrograph(obs: pd.Series, sims: dict[str, pd.Series], title: str, rain
     )
     axes = np.atleast_1d(axes)
     if rain is not None:
-        axes[0].bar(rain.loc[sl].index, rain.loc[sl], width=1.0, color=COLORS["rain"], linewidth=0)
+        r = rain.loc[sl]
+        if len(r) > 3 * 366:
+            r = r.resample("MS").sum()
+            axes[0].bar(r.index, r.values, width=28, align="edge", color=COLORS["rain"], linewidth=0)
+            axes[0].set_ylabel("Rain (mm/month)")
+        else:
+            axes[0].bar(r.index, r.values, width=1.0, color=COLORS["rain"], linewidth=0)
+            axes[0].set_ylabel("Rain (mm/day)")
         axes[0].invert_yaxis()
-        axes[0].set_ylabel("Rain (mm/day)")
         axes[0].set_title(title)
     else:
         axes[0].set_title(title)

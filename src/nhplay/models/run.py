@@ -108,6 +108,9 @@ def load_results(run_dir: Path, period: str = "test", epoch: int | None = None,
         xr = freqs[freq]["xr"]
         obs = xr[f"{target}_obs"].isel(time_step=-1).to_series()
         sim = xr[f"{target}_sim"].isel(time_step=-1).to_series()
+        # A river cannot carry negative flow. NeuralHydrology clips predictions at zero before computing
+        # its metrics (config key clip_targets_to_zero); we do the same so that both metric sets agree.
+        sim = sim.clip(lower=0.0)
         df = pd.DataFrame({"obs": obs, "sim": sim})
         df.index = pd.to_datetime(df.index)
         df.index.name = "date"
