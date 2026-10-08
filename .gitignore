@@ -1,0 +1,57 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.python-version
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Environment / secrets ----
+.env
+.env.*
+*.pem
+*.key
+
+# ---- Data (downloaded by scripts/download_data.py; never committed) ----
+data/camels_us/
+data/raw/
+data/cache/
+*.zip
+*.tar
+*.tar.gz
+*.tar.xz
+*.nc
+*.h5
+*.hdf5
+*.parquet
+*.feather
+*.p
+*.pkl
+*.pickle
+
+# ---- Model runs / checkpoints (reproducible via configs/) ----
+runs/
+*.pt
+*.pth
+*.ckpt
+events.out.tfevents.*
+
+# ---- Large generated outputs (figures/metrics below are small and ARE committed) ----
+outputs/predictions/*.csv
+outputs/predictions/*.nc
+
+# ---- Tooling / OS ----
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+*.tmp
+.streamlit/secrets.toml

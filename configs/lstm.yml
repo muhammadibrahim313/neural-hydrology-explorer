@@ -1,0 +1,108 @@
+# ======================================================================================
+# LSTM baseline (NeuralHydrology 'cudalstm' = a standard PyTorch nn.LSTM + linear head;
+# the name is historical, it runs fine on CPU and Apple MPS).
+# One model is trained jointly on all six basins; the static attributes tell it which basin
+# it is looking at (this is the multi-basin "regional" setup of Kratzert et al. 2019).
+# ======================================================================================
+experiment_name: lstm_6basins
+run_dir: runs
+
+# --- model -------------------------------------------------------------------------------
+model: cudalstm
+head: regression
+output_activation: linear
+hidden_size: 64          # number of LSTM memory cells
+initial_forget_bias: 3   # start with "remember by default" (helps learn slow storages like snow)
+output_dropout: 0.4
+learning_rate:
+  0: 1.0e-3
+  15: 5.0e-4
+  25: 1.0e-4
+
+# --- training loop ----------------------------------------------------------------------
+# device: leave unset -> NeuralHydrology picks CUDA > Apple MPS > CPU automatically.
+#         scripts/train.py also lets you force one with --device cpu|mps.
+seed: 42
+epochs: 30
+batch_size: 256
+seq_length: 365          # the model sees the last 365 days of weather to predict today's flow
+predict_last_n: 1        # ...and is scored only on the final day of each window
+optimizer: Adam
+loss: NSE                # basin-normalised squared error (Kratzert et al. 2019), so that big
+                         # and small rivers count equally in a multi-basin model
+clip_gradient_norm: 1
+target_noise_std: 0.005
+num_workers: 0
+validate_every: 1
+validate_n_random_basins: 6
+save_validation_results: True
+metrics:
+  - NSE
+  - KGE
+  - Alpha-NSE
+  - Beta-NSE
+  - Pearson-r
+  - FHV
+  - FLV
+  - FMS
+log_interval: 5
+log_tensorboard: True
+log_n_figures: 2
+save_weights_every: 1
+
+# --- which basins -----------------------------------------------------------------------
+train_basin_file: data/basins.txt
+validation_basin_file: data/basins.txt
+test_basin_file: data/basins.txt
+
+# --- chronological split (DD/MM/YYYY), water years run 1 Oct -> 30 Sep -------------------
+# train      : 19 water years. The first 365 days are only used as "warm-up" input history.
+# validation :  5 water years, used to pick the best epoch and to watch for over-fitting.
+# test       : 10 water years that the model never sees during training or model selection.
+train_start_date: "01/10/1980"
+train_end_date: "30/09/1999"
+validation_start_date: "01/10/1999"
+validation_end_date: "30/09/2004"
+test_start_date: "01/10/2004"
+test_end_date: "30/09/2014"
+
+# --- dataset ----------------------------------------------------------------------------
+dataset: camels_us
+data_dir: data/camels_us
+forcings:
+  - daymet
+
+# DYNAMIC inputs: one value per basin per day (Daymet, averaged over the basin)
+dynamic_inputs:
+  - prcp(mm/day)   # precipitation
+  - tmax(C)        # daily max temperature
+  - tmin(C)        # daily min temperature
+  - srad(W/m2)     # solar radiation
+  - vp(Pa)         # vapour pressure (humidity)
+
+# TARGET: observed streamflow at the gauge, converted by NeuralHydrology from cfs to mm/day
+target_variables:
+  - QObs(mm/d)
+clip_targets_to_zero:
+  - QObs(mm/d)
+
+# STATIC attributes: one value per basin, constant in time (CAMELS attributes v2.0)
+static_attributes:
+  - area_gages2            # basin area
+  - elev_mean              # mean elevation
+  - slope_mean             # mean slope
+  - frac_forest            # forest fraction
+  - lai_max                # max leaf area index
+  - soil_depth_pelletier   # depth to bedrock
+  - soil_porosity
+  - soil_conductivity
+  - sand_frac
+  - clay_frac
+  - p_mean                 # climate: mean precipitation
+  - pet_mean               # climate: mean potential evapotranspiration
+  - aridity                # climate: PET / P
+  - frac_snow              # climate: fraction of precipitation falling as snow
+  - high_prec_freq
+  - high_prec_dur
+  - low_prec_freq
+  - low_prec_dur
