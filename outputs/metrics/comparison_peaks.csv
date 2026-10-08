@@ -1,0 +1,7 @@
+basin,name,peak_date,rain_that_day_mm,rain_prev_3_days_mm,observed_mm_per_day,lstm_mm_per_day,transformer_mm_per_day
+01022500,"Narraguagus River at Cherryfield, Maine",2007-04-18,16.7,79.7,26.52,20.05,7.99
+02177000,"CHATTOOGA RIVER NEAR CLAYTON, GA",2009-09-20,78.3,53.4,32.28,10.77,11.54
+07057500,"North Fork River near Tecumseh, MO",2011-04-26,64.4,164.2,68.22,30.91,14.76
+08171300,"Blanco Rv nr Kyle, TX",2013-10-31,87.2,5.2,38.31,16.32,17.44
+11532500,SMITH R NR CRESCENT CITY CA,2008-12-28,90.3,67.7,118.36,36.16,34.21
+13235000,SF PAYETTE RIVER AT LOWMAN ID,2010-06-05,3.6,75.8,16.15,5.66,7.93

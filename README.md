@@ -155,7 +155,7 @@ Kratzert et al. (2019). Validation metrics are printed every epoch; the run fold
 ## 8. Train the Transformer (Phase 3)
 
 ```bash
-python scripts/train.py --model transformer   # ~25 min on M1 Max (MPS), 30 epochs
+python scripts/train.py --model transformer   # ~30 min on M1 Max (MPS), 30 epochs
 ```
 
 NeuralHydrology's `transformer` model: inputs are embedded to d_model = 64 (weather 5 -> 32, attributes
@@ -191,7 +191,58 @@ labelled as not a real warning level).
 ## 11. Results of version 1
 
 <!-- RESULTS_START -->
-Training in progress; this section is filled by `scripts/compare.py` output.
+Six CAMELS-US basins, identical inputs / target / split / epochs for both models, test decade
+2004-10-01 to 2014-09-30, one seed, Apple M1 Max (MPS). Full tables: `outputs/metrics/comparison.md`.
+
+| Model | Median NSE | Median KGE | Median r | Median α | Median β | Median FHV % | Params | Train time | Notes |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| LSTM (64 cells) | **0.796** | **0.730** | 0.903 | 0.843 | 1.011 | -9.7 | 22 849 | 4.9 min | smooth hydrographs, good timing; over-predicts low flows in the dry Texas basin |
+| Transformer (2 layers, 4 heads, d=64) | 0.451 | 0.641 | 0.701 | 0.772 | 1.032 | -21.2 | 67 809 | 32.7 min | noisy day-to-day, weaker timing; volume bias small; validation loss still falling at epoch 30 |
+
+Per basin (NSE / KGE):
+
+| Basin | River | LSTM | Transformer |
+|---|---|---:|---:|
+| 01022500 | Narraguagus, ME (snow + rain) | 0.837 / 0.827 | 0.357 / 0.513 |
+| 02177000 | Chattooga, GA (wet mountains) | 0.843 / 0.848 | 0.510 / 0.644 |
+| 07057500 | North Fork, MO (karst) | 0.732 / 0.648 | 0.392 / 0.504 |
+| 08171300 | Blanco, TX (flashy, semi-arid) | 0.659 / 0.289 | 0.340 / 0.650 |
+| 11532500 | Smith, CA (huge winter storms) | 0.754 / 0.671 | 0.593 / 0.638 |
+| 13235000 | SF Payette, ID (snowmelt) | 0.891 / 0.789 | 0.643 / 0.706 |
+
+The biggest observed flood of the test decade in each basin, and what each model said that day (mm/day):
+
+| Basin | Date | Rain that day | Rain previous 3 days | Observed | LSTM | Transformer |
+|---|---|---:|---:|---:|---:|---:|
+| Narraguagus | 2007-04-18 | 16.7 | 79.7 | 26.5 | 20.1 | 8.0 |
+| Chattooga | 2009-09-20 | 78.3 | 53.4 | 32.3 | 10.8 | 11.5 |
+| North Fork | 2011-04-26 | 64.4 | 164.2 | 68.2 | 30.9 | 14.8 |
+| Blanco | 2013-10-31 | 87.2 | 5.2 | 38.3 | 16.3 | 17.4 |
+| Smith | 2008-12-28 | 90.3 | 67.7 | 118.4 | 36.2 | 34.2 |
+| SF Payette | 2010-06-05 | 3.6 | 75.8 | 16.2 | 5.7 | 7.9 |
+
+![compare](outputs/figures/compare_hydrograph_01022500_wy2011.png)
+![nse](outputs/figures/compare_nse.png)
+
+**Reading the result honestly**
+
+* Under an identical, small training budget the **LSTM is clearly better** on every basin by NSE, and on
+  five of six by KGE. This matches the literature (Liu et al. 2025: LSTMs remain best for daily streamflow
+  regression; Transformers only catch up with autoregressive inputs or much more data).
+* It does **not** prove the Transformer cannot work here. Its validation loss was still decreasing at epoch 30
+  (0.0278 vs 0.0169 for the LSTM), it has three times as many parameters to fit from ~41 000 samples, and
+  nothing was tuned. A fair research comparison needs more epochs, a learning-rate search, several seeds and
+  many more basins. The point of version 1 is that the pipeline for that comparison now exists and is fair.
+* **Both models under-predict the largest floods** (Smith River: 118 mm/day observed, 36 and 34 predicted).
+  Peak-flow bias (FHV) is negative almost everywhere. Extremes are rare in the training data, and the
+  NSE loss has no special incentive for them: this is the central open problem for flood applications.
+* The LSTM **over-predicts low flows in the dry Blanco basin** (PBIAS +68 %, KGE 0.29): it never produces the
+  zero flows that occur on 22 % of days. The Transformer's volume there is right (PBIAS +2 %) but its timing is
+  poor. Dry basins and zero-flow days are a known weakness of regression-trained networks.
+* Visually, the Transformer hydrograph jitters from day to day while the LSTM is smooth: a recurrent state
+  behaves like a water store, attention over 365 separate days does not.
+
+Reproduce: `python scripts/train.py --model both && python scripts/evaluate.py && python scripts/compare.py`.
 <!-- RESULTS_END -->
 
 ## 12. What to look at first

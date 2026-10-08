@@ -230,10 +230,10 @@ Potential advantages: direct access to events far in the past without having to 
 update steps; parallel computation. Potential disadvantages for daily hydrology: there is no built-in
 notion of a slowly evolving storage, so the model has to re-derive "how wet is the soil" from scratch via
 attention; it has more ways to over-fit on a small dataset; and it needs more compute (our Transformer
-epoch took about 50 s against 14 s for the LSTM on an M1 Max). The literature so far (e.g. Liu et al.
+epoch took about 65 s against 10 s for the LSTM on an M1 Max). The literature so far (e.g. Liu et al.
 2025, HESS, 11 Transformer variants vs LSTM on CAMELS and 3 434 global basins) finds that LSTMs remain
 at least as good for day-ahead streamflow regression, so a Transformer win is not to be assumed.
-We run the experiment and let the data decide (section 14).
+We run the experiment and let the data decide (section 15).
 
 ## 12. What is NSE?
 
@@ -296,10 +296,51 @@ Other numbers you will see in the outputs: **RMSE** and **MAE** in mm/day (plain
 * **Normalisation statistics** are computed on the training period only (NeuralHydrology does this).
 * **Fixed seed** (`seed: 42`) so that a re-run gives the same result on the same hardware.
 
-Results for this run are in `outputs/metrics/comparison.md` and summarised in the README; they are
-also discussed in the section below once training has finished.
+Results for this run are in `outputs/metrics/comparison.md` and summarised in the README.
 
-## 15. From streamflow to flood risk
+## 15. What happened when we ran it
+
+Same six basins, same inputs, same decade. Median over basins on the test period 2004-2014:
+
+| Model | NSE | KGE | r | α | β | FHV % | parameters | training time |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| LSTM | 0.796 | 0.730 | 0.903 | 0.843 | 1.011 | -9.7 | 22 849 | 4.9 min |
+| Transformer | 0.451 | 0.641 | 0.701 | 0.772 | 1.032 | -21.2 | 67 809 | 32.7 min |
+
+How to read the row for the LSTM in words: on a typical basin the model explains about 80 % of the day-to-day
+variance of the river (NSE 0.80); the timing is good (r 0.90); the simulated peaks are about 16 % too flat
+(α 0.84); the total volume is right to 1 % (β 1.01); the highest 2 % of flows are 10 % too low (FHV -9.7 %).
+
+Concrete days, from `outputs/metrics/comparison_peaks.csv`:
+
+```
+Narraguagus River, 18 Apr 2007 (snowmelt + 80 mm of rain in the previous three days)
+    observed 26.5 mm/day     LSTM 20.1     Transformer 8.0
+Smith River, 28 Dec 2008 (90 mm of rain that day, 68 mm in the three days before)
+    observed 118.4 mm/day    LSTM 36.2     Transformer 34.2
+Blanco River, 31 Oct 2013 (87 mm of rain on a dry basin)
+    observed 38.3 mm/day     LSTM 16.3     Transformer 17.4
+```
+
+Lessons that generalise beyond this run:
+
+1. **A recurrent state is a good inductive bias for hydrology.** The LSTM's memory cells behave like water
+   stores, so its hydrographs are smooth and its recessions realistic. The Transformer, which has to rebuild
+   the basin state from attention over 365 separate days every time, produced jittery hydrographs and worse
+   timing (r 0.70 vs 0.90). Published large-sample comparisons find the same.
+2. **A fair comparison is a budget comparison.** The Transformer had three times the parameters, seven times
+   the compute, and was still improving at epoch 30, so this result says "LSTM wins at this budget", not
+   "Transformers cannot work". The configs are there to test longer training, learning-rate schedules and
+   seeds; just keep the test decade untouched.
+3. **Floods are the hard part.** Both models missed the biggest event of the decade in every basin by a factor
+   of two to three. The training loss treats every day equally and the biggest floods are a handful of days
+   in 19 years. Return-period-aware evaluation, probabilistic heads (CMAL) and more basins are the standard
+   responses; see the README's research extensions.
+4. **Dry rivers are hard too.** The LSTM never predicts the zero flows that the Blanco River shows on 22 % of
+   days, which wrecks its KGE there (0.29) even though its NSE (0.66) looks acceptable. Always look at more
+   than one metric and at the hydrograph itself.
+
+## 16. From streamflow to flood risk
 
 A river "floods" when its flow exceeds what the channel can carry. Operational systems do not use a
 single number; they compare the forecast to **return-period thresholds**: Google Flood Hub, for example,
@@ -311,7 +352,7 @@ record (default 99 %) and the app counts how many test-period days the observati
 it. This is a demonstration of the idea, not a real flood-stage threshold. CAMELS has no official flood
 stages, and a daily-mean model has no information about the hourly peak that actually overtops a bank.
 
-## 16. Where this sits relative to Google Flood Hub
+## 17. Where this sits relative to Google Flood Hub
 
 ```
 This project                           Google Flood Hub (operational)
