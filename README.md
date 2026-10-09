@@ -180,13 +180,21 @@ NeuralHydrology's own numbers for the same series (they agree to 1e-7).
 ## 10. Launch the Streamlit explorer (Phase 4)
 
 ```bash
-streamlit run app/streamlit_app.py
+streamlit run app/streamlit_app.py --server.port 8502
 ```
 
-Select a basin, see its attributes, the weather and observed hydrograph for any water year, the LSTM
-and/or Transformer predictions for the test period, the metrics with a plain-English interpretation, and an
-**educational** flood-threshold demonstration (a percentile of the basin's own observed record; clearly
-labelled as not a real warning level).
+Presentation-ready, five tabs, nothing to tune before showing it:
+
+| Tab | What it shows |
+|---|---|
+| **Results overview** | side-by-side NSE/KGE table for both models with a median row and progress bars, NSE and KGE bar charts, a one-paragraph reading, full metric details (r, α, β, bias, FHV), the biggest flood per basin with each model's prediction, run details (parameters, epochs, training time), CSV downloads |
+| **Basin & weather** | area/elevation/slope/forest/aridity/snow, a map of the six gauges, long-term water balance, all 18 static attributes with meanings, rain + temperature + flow for presets (whole record, wettest year, largest flood on record, or any water year) |
+| **Predictions** | observed vs LSTM/Transformer hydrograph with presets that pick themselves (largest flood of the test decade, whole decade, wettest / best-predicted / worst-predicted water year), scores for the decade and for the window shown, plain-English reading, a year-by-year NSE/KGE/peak table, scatter, flow-duration curve and seasonal regime |
+| **Flood thresholds** | educational 2-, 5- and 10-year return levels estimated from the annual maxima of 1981-2004 (the Flood Hub "warning / danger / extreme" idea), in mm/day and m³/s, drawn on the test-decade hydrograph, with days-above / hits / misses / false alarms per model |
+| **Methods & glossary** | the exact inputs, target, split, loss and model sizes, plus a plain-English glossary |
+
+The app only reads `data/` and `outputs/`; it never trains. Port 8502 is used in the examples because 8501 is
+Streamlit's default and is often already taken by another app.
 
 ## 11. Results of version 1
 
@@ -252,7 +260,7 @@ Reproduce: `python scripts/train.py --model both && python scripts/evaluate.py &
 3. `configs/lstm.yml`: every line is commented; this *is* the model definition.
 4. `outputs/metrics/comparison.md` and the `compare_hydrograph_*_wy2011.png` figures.
 5. `src/nhplay/evaluation/metrics.py` to see exactly what NSE and KGE compute.
-6. Then the notebook and the app.
+6. Then the notebook and the app (start with the Results overview tab).
 
 ## 13. How the experiment avoids fooling itself
 
@@ -275,7 +283,7 @@ Reproduce: `python scripts/train.py --model both && python scripts/evaluate.py &
 * **Dry basins are hard.** On the Blanco River (TX) the LSTM never predicts the zero flows that occur on
   22 % of days; the flow-duration curve `outputs/figures/fdc_lstm_08171300_test.png` shows it clearly.
 * **Extreme floods are underestimated.** Both models saturate around 35 to 40 mm/day on the Smith River.
-* **Flood thresholds in the app are a demonstration**, not official flood stages.
+* **Flood thresholds in the app are a demonstration**: empirical return levels from 24 annual maxima, not official flood stages.
 * Static attributes are from CAMELS v2.0 (2017) and the forcing ends in 2014; the data are historical.
 
 ## 15. Relation to Google Flood Hub and OpenHydroNet

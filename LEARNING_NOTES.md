@@ -347,9 +347,13 @@ single number; they compare the forecast to **return-period thresholds**: Google
 marks the flow expected once every 2 years as "warning", once in 5 years as "danger" and once in 20 years
 as "extreme", or uses official agency levels where they exist.
 
-The Streamlit app includes an *educational* version: a slider picks a percentile of the observed flow
-record (default 99 %) and the app counts how many test-period days the observation and each model exceed
-it. This is a demonstration of the idea, not a real flood-stage threshold. CAMELS has no official flood
+The Streamlit app includes an *educational* version of this idea. For each basin it takes the largest daily
+flow of every water year from 1981 to 2004 (24 annual maxima, all before the test decade), ranks them, and
+reads off the flows that are exceeded on average once every 2, 5 and 10 years (Weibull plotting positions,
+interpolated in log return period). Those three lines play the role of Flood Hub's warning, danger and
+extreme levels, and the app counts, for the test decade, how many days the observation and each model are
+above each line (hits, misses, false alarms). It stops at 10 years because 24 years of data cannot support a
+20-year estimate. This is a demonstration, not a real flood-stage threshold: CAMELS has no official flood
 stages, and a daily-mean model has no information about the hourly peak that actually overtops a bank.
 
 ## 17. Where this sits relative to Google Flood Hub
