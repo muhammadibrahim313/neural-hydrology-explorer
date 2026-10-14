@@ -25,7 +25,7 @@
 | 11532500 | transformer | 0.593 | 0.638 | 0.772 | 0.718 | 1.007 | 0.678 | -39.650 |
 | 13235000 | transformer | 0.643 | 0.706 | 0.876 | 1.180 | 1.196 | 19.587 | 11.487 |
 
-## Biggest observed flood per basin and what each model predicted on that day (mm/day)
+## Highest observed daily flow per basin and what each model predicted on that day (mm/day)
 
 |    basin | name                                    | peak_date   |   rain_that_day_mm |   rain_prev_3_days_mm |   observed_mm_per_day |   lstm_mm_per_day |   transformer_mm_per_day |
 |---------:|:----------------------------------------|:------------|-------------------:|----------------------:|----------------------:|------------------:|-------------------------:|

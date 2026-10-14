@@ -332,8 +332,9 @@ Lessons that generalise beyond this run:
    the compute, and was still improving at epoch 30, so this result says "LSTM wins at this budget", not
    "Transformers cannot work". The configs are there to test longer training, learning-rate schedules and
    seeds; just keep the test decade untouched.
-3. **Floods are the hard part.** Both models missed the biggest event of the decade in every basin by a factor
-   of two to three. The training loss treats every day equally and the biggest floods are a handful of days
+3. **Extreme flows are the hard part.** Both models missed the highest daily flow of the decade in every basin by a
+   factor of two to three (a high discharge does not by itself prove flooding, so we say high-flow event). The
+   training loss treats every day equally and the highest flows are a handful of days
    in 19 years. Return-period-aware evaluation, probabilistic heads (CMAL) and more basins are the standard
    responses; see the README's research extensions.
 4. **Dry rivers are hard too.** The LSTM never predicts the zero flows that the Blanco River shows on 22 % of

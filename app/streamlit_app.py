@@ -336,7 +336,7 @@ with tab_results:
                 f"The LSTM has the higher NSE in {lstm_wins} of {len(wide)} basins. Both models were trained with the same data, "
                 "inputs, split, epochs and batch size; only the architecture differs. The Transformer's validation loss was "
                 "still decreasing at the last epoch, so this is a result *at this training budget*, not a verdict on the "
-                "architecture. Both models under-predict the largest flood of the decade in every basin (see the table below)."
+                "architecture. Both models under-predict the highest daily flow of the decade in every basin (see the table below)."
             )
 
         with st.expander("Full metric details per basin and model (r, α, β, bias, peak-flow bias FHV)", expanded=False):
@@ -348,7 +348,8 @@ with tab_results:
 
         peaks = get_csv("comparison_peaks.csv")
         if peaks is not None:
-            st.markdown("**The biggest observed flood of the test decade in each basin, and what each model said that day** (mm/day)")
+            st.markdown("**The highest observed daily flow of the test decade in each basin, and what each model said that day** (mm/day). "
+                        "A high daily discharge does not by itself confirm that flooding occurred.")
             pk = peaks.rename(columns={"peak_date": "date", "rain_that_day_mm": "rain that day (mm)",
                                        "rain_prev_3_days_mm": "rain previous 3 days (mm)", "observed_mm_per_day": "observed",
                                        "lstm_mm_per_day": "LSTM", "transformer_mm_per_day": "Transformer"})
@@ -420,13 +421,13 @@ with tab_basin:
     wettest_wy = int(rain_by_wy.idxmax())
     peak_day_all = flow_all.idxmax()
     preset = st.radio("Time window", ["Whole record 1980-2014", f"Wettest water year ({wettest_wy})",
-                                      f"Largest flood on record (±45 days around {peak_day_all.date()})", "Choose a water year"],
+                                      f"Highest daily flow on record (±45 days around {peak_day_all.date()})", "Choose a water year"],
                       horizontal=True, key="basin_window")
     if preset.startswith("Whole"):
         start, end = ts.index.min(), ts.index.max()
     elif preset.startswith("Wettest"):
         start, end = wy_bounds(wettest_wy)
-    elif preset.startswith("Largest"):
+    elif preset.startswith("Highest"):
         start, end = peak_day_all - pd.Timedelta(days=45), peak_day_all + pd.Timedelta(days=45)
     else:
         wy = st.slider("Water year (1 Oct of previous year → 30 Sep)", 1981, 2014, 2010, key="basin_wy")
@@ -455,15 +456,15 @@ with tab_pred:
         wettest_test_wy = int(rain_test.groupby(E.water_year(rain_test.index)).sum().idxmax())
         best_wy = int(by_year[f"{first}_nse"].idxmax())
         worst_wy = int(by_year[f"{first}_nse"].idxmin())
-        options = [f"Largest flood of the test decade (±45 days around {peak_day.date()})",
+        options = [f"Highest daily flow of the test decade (±45 days around {peak_day.date()})",
                    "Whole test decade 2004-2014",
-                   f"Water year with the largest flood ({int(E.water_year(pd.DatetimeIndex([peak_day]))[0])})",
+                   f"Water year with the highest daily flow ({int(E.water_year(pd.DatetimeIndex([peak_day]))[0])})",
                    f"Wettest test water year ({wettest_test_wy})",
                    f"Best-predicted water year by {LABELS[first]} ({best_wy})",
                    f"Worst-predicted water year by {LABELS[first]} ({worst_wy})",
                    "Choose a water year"]
         preset = st.radio("Time window", options, horizontal=True, key="pred_window")
-        if preset.startswith("Largest flood"):
+        if preset.startswith("Highest daily flow"):
             start, end = peak_day - pd.Timedelta(days=45), peak_day + pd.Timedelta(days=45)
         elif preset.startswith("Whole"):
             start, end = pd.Timestamp(TEST[0]), pd.Timestamp(TEST[1])

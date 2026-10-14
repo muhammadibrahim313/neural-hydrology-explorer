@@ -14,7 +14,7 @@ USGS gauge), trains two deep-learning *rainfall-runoff* models with the NeuralHy
 baseline and a **Transformer** experiment) under an identical protocol, evaluates both on a held-out decade
 (2004–2014) with hydrology metrics (NSE, KGE, peak-flow bias), draws hydrographs, and presents everything in a
 Streamlit app with a Flood-Hub-style educational flood-threshold view. Key result: at the same training budget
-the LSTM (median test NSE 0.80) clearly beats the Transformer (0.45); both under-predict the largest floods.
+the LSTM (median test NSE 0.80) clearly beats the Transformer (0.45); both under-predict the highest flow events.
 
 ---
 
@@ -58,7 +58,7 @@ runs/<experiment>_<stamp>/           (git-ignored: weights model_epochXXX.pt, co
 outputs/predictions/<model>_test.csv  (basin, date, obs, sim in mm/day; committed, ~0.7 MB each)
 outputs/metrics/<model>_test_metrics.csv
    │
-   │   scripts/compare.py       — LSTM vs Transformer: per-basin table, medians, biggest-flood table,
+   │   scripts/compare.py       — LSTM vs Transformer: per-basin table, medians, highest-flow-event table,
    │                               run details, comparison figures, comparison.md
    ▼
 outputs/metrics/comparison_test.csv, comparison_summary.csv, comparison_peaks.csv, run_details.csv, comparison.md
@@ -209,7 +209,7 @@ Test decade 2004–2014, median over the six basins (`outputs/metrics/comparison
 | Transformer | 0.451 | 0.641 | 0.701 | 0.772 | 1.032 | −21.2 |
 
 Per-basin numbers: `outputs/metrics/comparison_test.csv` (long format: basin, model, nse, kge, r, alpha, beta,
-rmse, mae, pbias, fhv, n_days, run_dir). Biggest flood per basin and what each model predicted that day:
+rmse, mae, pbias, fhv, n_days, run_dir). Highest observed daily flow per basin and what each model predicted that day:
 `outputs/metrics/comparison_peaks.csv`. Everything as Markdown: `outputs/metrics/comparison.md`.
 
 Metric meanings (`src/nhplay/evaluation/metrics.py`):
@@ -221,7 +221,7 @@ Metric meanings (`src/nhplay/evaluation/metrics.py`):
 
 Honest interpretation: the LSTM wins on every basin by NSE at this budget; the Transformer's validation loss was
 still falling at epoch 30 and nothing was tuned, so this is a budget-limited result, consistent with the
-literature (Liu et al. 2025, HESS). Both models under-predict the biggest flood of the decade in every basin by a
+literature (Liu et al. 2025, HESS). Both models under-predict the highest daily flow of the decade in every basin by a
 factor 2–3 (e.g. Smith River 2008-12-28: observed 118 mm/day, LSTM 36, Transformer 34). The LSTM over-predicts
 low flows in the dry Blanco basin (PBIAS +68 %).
 
@@ -232,7 +232,7 @@ low flows in the dry Blanco basin (PBIAS +68 %).
 | `data_<basin>_wy2010.png`, `data_<basin>_full.png` | rain (inverted bars), temperature, observed flow — one water year and the full record |
 | `hydrograph_<model>_<basin>_wy2011.png`, `..._test_full.png` | observed vs one model, with rain on top |
 | `compare_hydrograph_<basin>_wy2011.png`, `..._test_full.png` | observed vs both models |
-| `compare_peak_<basin>.png` | ±30 days around the biggest observed flood of the test decade |
+| `compare_peak_<basin>.png` | ±30 days around the highest observed daily flow of the test decade |
 | `compare_nse.png`, `compare_kge.png` | grouped bars per basin and model |
 | `scatter_<model>_test.png` | observed vs predicted, all basins pooled, 1:1 line |
 | `fdc_<model>_<basin>_test.png` | flow duration curves (log scale) |
@@ -245,10 +245,10 @@ Reads only `data/` and `outputs/`. Sidebar: basin, model (LSTM / Transformer / B
 setup. Five tabs:
 
 1. **Results overview** — side-by-side NSE/KGE table with median row and progress bars, Δ per basin, NSE and
-   KGE bar charts, a one-paragraph reading, full metric details, biggest-flood table, run details, CSV downloads.
+   KGE bar charts, a one-paragraph reading, full metric details, highest-flow-event table, run details, CSV downloads.
 2. **Basin & weather** — key attributes, a map of the six gauges, long-term water balance, all 18 static inputs,
-   rain + temperature + flow with presets (whole record, wettest year, largest flood on record, any water year).
-3. **Predictions** — hydrograph with self-selecting windows (largest flood of the test decade, whole decade,
+   rain + temperature + flow with presets (whole record, wettest year, highest daily flow on record, any water year).
+3. **Predictions** — hydrograph with self-selecting windows (highest daily flow of the test decade, whole decade,
    wettest / best-predicted / worst-predicted year), scores for the decade and for the window, plain-English
    reading, year-by-year table, scatter, flow-duration curve, seasonal regime.
 4. **Flood thresholds** — educational 2/5/10-year return levels from the 1981–2004 annual maxima (the Flood Hub

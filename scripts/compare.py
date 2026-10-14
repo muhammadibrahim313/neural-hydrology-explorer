@@ -7,7 +7,7 @@
 Writes
     outputs/metrics/comparison_test.csv          per basin x model
     outputs/metrics/comparison_summary.csv       median over basins per model
-    outputs/metrics/comparison_peaks.csv         the biggest observed flood per basin and what each model predicted
+    outputs/metrics/comparison_peaks.csv         the highest observed daily flow per basin and what each model predicted
     outputs/metrics/comparison.md                markdown tables for the README
     outputs/figures/compare_hydrograph_<basin>_wy<year>.png, compare_nse.png, compare_kge.png
 """
@@ -44,7 +44,7 @@ def main() -> None:
     table.to_csv(METRIC_DIR / f"comparison_{args.period}.csv", index=False, float_format="%.4f")
     summary.to_csv(METRIC_DIR / "comparison_summary.csv", float_format="%.4f")
 
-    # hydrographs with both models, and the biggest flood of the test period per basin
+    # hydrographs with both models, and the highest observed daily flow of the test period per basin
     results = {m: load_results(p, args.period) for m, p in runs.items()}
     peak_rows = []
     for basin in results["lstm"]:
@@ -65,8 +65,8 @@ def main() -> None:
         for m in sims:
             row[f"{m}_mm_per_day"] = round(float(sims[m].loc[peak_day]), 2)
         peak_rows.append(row)
-        # zoom on the biggest flood: +-30 days
-        plot_hydrograph(obs, sims, f"{basin} {name} - biggest observed flood of the test period ({peak_day.date()})",
+        # zoom on the highest daily flow: +-30 days
+        plot_hydrograph(obs, sims, f"{basin} {name} - highest observed daily flow of the test period ({peak_day.date()})",
                         rain=rain, start=peak_day - pd.Timedelta(days=30), end=peak_day + pd.Timedelta(days=30),
                         savepath=FIGURE_DIR / f"compare_peak_{basin}.png")
     peaks = pd.DataFrame(peak_rows)
@@ -82,7 +82,7 @@ def main() -> None:
     md = ["# LSTM vs Transformer (" + args.period + " period: " + "2004-10-01 to 2014-09-30" + ")\n",
           "## Median over the six basins\n", summary.to_markdown(), "\n",
           "## Per basin\n", markdown_table(table),
-          "## Biggest observed flood per basin and what each model predicted on that day (mm/day)\n",
+          "## Highest observed daily flow per basin and what each model predicted on that day (mm/day)\n",
           peaks.to_markdown(index=False), "\n",
           "## Run details\n", pd.DataFrame(info).T.to_markdown(), "\n"]
     (METRIC_DIR / "comparison.md").write_text("\n".join(md))

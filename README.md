@@ -160,7 +160,7 @@ Median over the six basins (full tables in [`outputs/metrics/comparison.md`](out
 | 11532500 | Smith, California · winter storms | 0.75 / 0.67 | 0.59 / 0.64 |
 | 13235000 | SF Payette, Idaho · snowmelt | 0.89 / 0.79 | 0.64 / 0.71 |
 
-### Extreme events: the biggest flood of the decade in each basin
+### Extreme events: the highest observed daily flow of the decade in each basin
 
 | Basin | Date | Rain that day | Rain previous 3 days | Observed | LSTM | Transformer |
 |---|---|---:|---:|---:|---:|---:|
@@ -171,12 +171,12 @@ Median over the six basins (full tables in [`outputs/metrics/comparison.md`](out
 | Smith | 2008-12-28 | 90.3 mm | 67.7 mm | 118.4 | 36.2 | 34.2 |
 | SF Payette | 2010-06-05 | 3.6 mm | 75.8 mm | 16.2 | 5.7 | 7.9 |
 
-<sub>Flows in mm/day. Both models under-predict every one of these peaks by a factor of two to three.</sub>
+<sub>Flows in mm/day. Both models under-predict every one of these peaks by a factor of two to three. A high daily discharge does not by itself confirm that flooding occurred, so these are called high-flow events, not floods.</sub>
 
 <p align="center">
-<img src="outputs/figures/compare_peak_11532500.png" width="92%" alt="The biggest flood of the test decade on the Smith River and what each model predicted">
+<img src="outputs/figures/compare_peak_11532500.png" width="92%" alt="The highest daily flow of the test decade on the Smith River and what each model predicted">
 </p>
-<p align="center"><i>Smith River, California, December 2008: four days of 50 to 90 mm of rain, a 118 mm/day observed peak, and two models that saturate near 35 mm/day.</i></p>
+<p align="center"><i>Smith River, California, December 2008, the highest daily flow of the test decade: four days of 50 to 90 mm of rain, a 118 mm/day observed peak, and two models that saturate near 35 mm/day.</i></p>
 
 <table align="center">
 <tr>
@@ -185,7 +185,7 @@ Median over the six basins (full tables in [`outputs/metrics/comparison.md`](out
 </tr>
 <tr>
 <td><i>South Fork Payette (Idaho), water year 2011: winter precipitation is stored as snow and released in May to July. The LSTM's recurrent state tracks the slow release; the Transformer is noisier and early.</i></td>
-<td><i>Blanco River (Texas), October 2013: 87 mm of rain on a dry basin produced 38 mm/day; both models predicted about 17. Flash floods on dry soils remain the hardest case.</i></td>
+<td><i>Blanco River (Texas), October 2013: 87 mm of rain on a dry basin produced 38 mm/day; both models predicted about 17. Sharp responses on dry soils remain the hardest case.</i></td>
 </tr>
 </table>
 
@@ -196,7 +196,7 @@ Median over the six basins (full tables in [`outputs/metrics/comparison.md`](out
 * This is **not a verdict on Transformers**: the Transformer's validation loss was still falling at epoch 30, it has three
   times the parameters to fit from about 41 000 samples, and nothing was tuned. The fair, reproducible pipeline for a
   bigger comparison is the deliverable.
-* **Extreme flows are under-predicted by both models.** The largest flood of the decade is missed by a factor of two to
+* **Extreme flows are under-predicted by both models.** The highest daily flow of the decade is missed by a factor of two to
   three in every basin; peak-flow bias (FHV) is negative almost everywhere. Rare events are a handful of days in 19
   training years and the NSE loss gives them no special weight.
 * **Dry basins are hard.** The LSTM over-predicts low flows in the Blanco basin (+68 % volume, KGE 0.29) and never produces
@@ -248,13 +248,13 @@ streamlit run app/streamlit_app.py --server.port 8502
 <p align="center">
 <img src="docs/images/app_results_tab.png" width="92%" alt="Neural Hydrology Explorer, results overview tab">
 </p>
-<p align="center"><i>Results overview: both models side by side, per basin and as a median, with the biggest-flood table and run details.</i></p>
+<p align="center"><i>Results overview: both models side by side, per basin and as a median, with the highest-flow-event table and run details.</i></p>
 
 | Tab | What it shows |
 |---|---|
 | **📊 Results overview** | LSTM vs Transformer table with a median row, Δ per basin, NSE / KGE charts, extreme-event table, run details, CSV download |
 | **🗺️ Basin & weather** | map of the six gauges, attributes with meanings, water balance, rain + temperature + flow with one-click windows |
-| **📈 Predictions** | observed vs predicted hydrograph with windows that pick themselves (largest flood, wettest year, best / worst year), year-by-year scores, scatter, flow-duration curve, seasonal regime |
+| **📈 Predictions** | observed vs predicted hydrograph with windows that pick themselves (highest flow, wettest year, best / worst year), year-by-year scores, scatter, flow-duration curve, seasonal regime |
 | **🚨 Flood thresholds** | educational 2 / 5 / 10-year return levels from the pre-test annual maxima (the Flood Hub warning / danger / extreme idea), with hits, misses and false alarms per model |
 | **ℹ️ Methods & glossary** | exact inputs, target, split, model sizes; plain-English definitions |
 
