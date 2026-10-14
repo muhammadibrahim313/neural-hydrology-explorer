@@ -1,0 +1,4 @@
+# Keep GitHub's language bar honest: the executed notebook (with embedded images) is documentation, not code.
+*.ipynb linguist-documentation
+# Figures and screenshots are binary
+*.png binary
