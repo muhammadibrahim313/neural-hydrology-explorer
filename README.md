@@ -14,15 +14,15 @@ scored honestly on a decade they never saw, with every step explained for someon
 <img src="https://img.shields.io/badge/tests-10%20passing-2a78d6" alt="tests">
 <img src="https://img.shields.io/badge/code-MIT-lightgrey" alt="mit">
 <img src="https://img.shields.io/badge/data-CAMELS--US%20CC--BY--4.0-eda100" alt="data">
+<a href="https://neural-hydrology-explorer.streamlit.app"><img src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg" alt="Open in Streamlit"></a>
 </p>
 
 <p align="center">
-<b>Live demo:</b> <i>coming soon on Streamlit Community Cloud</i> &nbsp;·&nbsp;
+<b>Live demo:</b> <a href="https://neural-hydrology-explorer.streamlit.app">neural-hydrology-explorer.streamlit.app</a> &nbsp;·&nbsp;
 <a href="#quick-start">Run it locally in 5 commands</a> &nbsp;·&nbsp;
 <a href="ARCHITECTURE.md">Architecture</a> &nbsp;·&nbsp;
 <a href="LEARNING_NOTES.md">Learning notes</a>
 </p>
-<!-- After deploying on share.streamlit.io, replace the "coming soon" text above with the app URL. -->
 
 <p align="center">
 <img src="outputs/figures/compare_hydrograph_01022500_wy2011.png" width="92%" alt="Observed vs LSTM vs Transformer streamflow, Narraguagus River, water year 2011">
