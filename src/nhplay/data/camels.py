@@ -83,11 +83,82 @@ def read_basin_list(path: Path = BASIN_LIST_FILE) -> list[str]:
     return [line.strip() for line in Path(path).read_text().splitlines() if line.strip() and not line.startswith("#")]
 
 
+# ----------------------------------------------------------------------------------------
+# Readers. NeuralHydrology's own readers are used when the library is installed, so that what
+# you inspect is byte-for-byte what the models train on. The pure-pandas versions below mirror
+# them line by line (tests/test_loaders.py checks they agree) and let the Streamlit app run
+# without PyTorch, e.g. on Streamlit Community Cloud.
+# ----------------------------------------------------------------------------------------
+def _nh_available() -> bool:
+    try:
+        import neuralhydrology  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+def _find_forcing_file(basin: str, data_dir: Path, forcing: str) -> Path:
+    files = list((Path(data_dir) / "basin_mean_forcing" / forcing).glob(f"**/{basin}_*_forcing_leap.txt"))
+    if not files:
+        raise FileNotFoundError(f"No {forcing} forcing file for basin {basin} under {data_dir}")
+    return files[0]
+
+
+def _find_discharge_file(basin: str, data_dir: Path) -> Path:
+    files = list((Path(data_dir) / "usgs_streamflow").glob(f"**/{basin}_streamflow_qc.txt"))
+    if not files:
+        raise FileNotFoundError(f"No streamflow file for basin {basin} under {data_dir}")
+    return files[0]
+
+
+def _read_forcing_pandas(path: Path) -> tuple[pd.DataFrame, int]:
+    """Mirror of neuralhydrology.datasetzoo.camelsus.load_camels_us_forcings."""
+    with open(path) as fp:
+        fp.readline()                      # latitude
+        fp.readline()                      # elevation
+        area = int(fp.readline())          # basin area in m^2
+        df = pd.read_csv(fp, sep=r"\s+")
+    df["date"] = pd.to_datetime(df.Year.map(str) + "/" + df.Mnth.map(str) + "/" + df.Day.map(str), format="%Y/%m/%d")
+    return df.set_index("date"), area
+
+
+def _read_discharge_pandas(path: Path, area_m2: int) -> pd.Series:
+    """Mirror of load_camels_us_discharge: cfs -> mm/day over the basin. Missing values (-999) become NaN."""
+    cols = ["basin", "Year", "Mnth", "Day", "QObs", "flag"]
+    df = pd.read_csv(path, sep=r"\s+", header=None, names=cols)
+    df["date"] = pd.to_datetime(df.Year.map(str) + "/" + df.Mnth.map(str) + "/" + df.Day.map(str), format="%Y/%m/%d")
+    df = df.set_index("date")
+    q = 28316846.592 * df.QObs * 86400 / (area_m2 * 10**6)   # 1 cfs = 28 316 846.592 mm^3/s
+    return q.where(df.QObs >= 0)
+
+
+def _read_attributes_pandas(data_dir: Path, basins: list[str] | None = None) -> pd.DataFrame:
+    """Mirror of load_camels_us_attributes: all camels_*.txt tables joined on gauge_id."""
+    folder = Path(data_dir) / "camels_attributes_v2.0"
+    if not folder.exists():
+        raise RuntimeError(f"Attribute folder not found at {folder}")
+    dfs = [pd.read_csv(f, sep=";", header=0, dtype={"gauge_id": str}).set_index("gauge_id")
+           for f in sorted(folder.glob("camels_*.txt"))]
+    df = pd.concat(dfs, axis=1)
+    df["huc"] = df["huc_02"].apply(lambda x: str(x).zfill(2))
+    df = df.drop("huc_02", axis=1)
+    if basins:
+        missing = [b for b in basins if b not in df.index]
+        if missing:
+            raise ValueError(f"Basins without attributes: {missing}")
+        df = df.loc[basins]
+    return df
+
+
 def load_forcing(basin: str, data_dir: Path = CAMELS_DIR, forcing: str = "daymet") -> tuple[pd.DataFrame, int]:
     """Daily basin-mean weather for one basin. Returns (DataFrame indexed by date, area in m^2)."""
-    from neuralhydrology.datasetzoo.camelsus import load_camels_us_forcings
+    path = _find_forcing_file(basin, Path(data_dir), forcing)
+    if _nh_available():
+        from neuralhydrology.datasetzoo.camelsus import load_camels_us_forcings
 
-    df, area_m2 = load_camels_us_forcings(data_dir=Path(data_dir), basin=basin, forcings=forcing)
+        df, area_m2 = load_camels_us_forcings(data_dir=Path(data_dir), basin=basin, forcings=forcing)
+    else:
+        df, area_m2 = _read_forcing_pandas(path)
     return df, int(area_m2)
 
 
@@ -98,10 +169,14 @@ def load_discharge_mm(basin: str, area_m2: int, data_dir: Path = CAMELS_DIR) -> 
     turns it into a depth of water spread over the basin per day, which makes basins of very
     different sizes comparable and puts streamflow in the *same unit as rainfall*.
     """
-    from neuralhydrology.datasetzoo.camelsus import load_camels_us_discharge
+    path = _find_discharge_file(basin, Path(data_dir))
+    if _nh_available():
+        from neuralhydrology.datasetzoo.camelsus import load_camels_us_discharge
 
-    q = load_camels_us_discharge(data_dir=Path(data_dir), basin=basin, area=area_m2)
-    q = q.replace(-999.0, np.nan)
+        q = load_camels_us_discharge(data_dir=Path(data_dir), basin=basin, area=area_m2)
+        q = q.where(q >= 0)  # -999 flags were scaled by the unit conversion; any negative flow is "missing"
+    else:
+        q = _read_discharge_pandas(path, area_m2)
     q.name = "QObs(mm/d)"
     return q
 
@@ -121,10 +196,11 @@ def load_discharge_cfs(basin: str, data_dir: Path = CAMELS_DIR) -> pd.Series:
 
 def load_attributes(basins: list[str] | None = None, data_dir: Path = CAMELS_DIR) -> pd.DataFrame:
     """All CAMELS v2.0 attributes (one row per basin). Index = gauge_id string."""
-    from neuralhydrology.datasetzoo.camelsus import load_camels_us_attributes
+    if _nh_available():
+        from neuralhydrology.datasetzoo.camelsus import load_camels_us_attributes
 
-    df = load_camels_us_attributes(data_dir=Path(data_dir), basins=basins or [])
-    return df
+        return load_camels_us_attributes(data_dir=Path(data_dir), basins=basins or [])
+    return _read_attributes_pandas(Path(data_dir), basins)
 
 
 @dataclass

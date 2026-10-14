@@ -1,0 +1,11 @@
+# Light dependencies for running or deploying ONLY the Streamlit app.
+# No PyTorch / NeuralHydrology needed: the app reads the committed predictions and metrics under outputs/
+# and downloads the ~10 MB of CAMELS-US basin data on its first start.
+# Streamlit Community Cloud uses this file automatically when the entrypoint is app/streamlit_app.py
+# (it searches the entrypoint's folder before the repository root). For training, use ../requirements.txt.
+streamlit>=1.40
+pandas>=2.2
+numpy>=1.26
+plotly>=5.20
+requests>=2.31
+remotezip>=0.12

@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — the complete map of this project
 
-This file is written to be pasted into an AI assistant (ChatGPT, Claude, …) or read by a new collaborator.
+This file is written to be pasted into an AI assistant such as ChatGPT, or read by a new collaborator.
 It explains what every folder and file does, how data flows from raw files to charts, what the numbers
 mean, and what the known limitations are. It contains no code; it points at the code.
 
@@ -108,7 +108,8 @@ neural-hydrology-explorer/
 │
 ├── src/nhplay/                   thin readable helper package (NeuralHydrology does the heavy lifting)
 │   ├── paths.py                  folder layout constants (PROJECT_ROOT, CAMELS_DIR, RUNS_DIR, OUTPUT_DIR …)
-│   ├── data/camels.py            loaders wrapping NeuralHydrology's CAMELS readers; dictionaries that describe
+│   ├── data/camels.py            loaders: NeuralHydrology's CAMELS readers when installed, otherwise identical
+│   │                             pure-pandas versions (so the app runs without PyTorch); dictionaries that describe
 │   │                             every variable (DYNAMIC_INPUTS, STATIC_ATTRIBUTES, TARGET); BasinData object;
 │   │                             basin_summary(); raw-cfs reader for teaching the unit conversion
 │   ├── models/run.py             pick_device() (mps/cpu/cuda), train(), evaluate(), load_results() (result
@@ -123,10 +124,12 @@ neural-hydrology-explorer/
 │   └── visualization/plots.py    matplotlib: rain+temperature+flow panels, hydrograph obs vs models (rain on
 │                                 top), scatter, flow-duration curve, grouped metric bars; fixed colour roles
 │
-├── app/streamlit_app.py          Neural Hydrology Explorer (5 tabs, see section 7)
+├── app/streamlit_app.py          Neural Hydrology Explorer (5 tabs, see section 7); downloads the data itself on first start
+├── app/requirements.txt          light dependencies (no PyTorch) for running/deploying only the app, e.g. Streamlit Cloud
 ├── notebooks/exploration.ipynb   executed notebook: Phase 1 data story + model results + flood demo
 ├── tests/
 │   ├── test_metrics.py           our NSE/KGE/FHV == NeuralHydrology's reference implementation
+│   ├── test_loaders.py           pure-pandas CAMELS readers == NeuralHydrology's; -999 flow becomes NaN
 │   ├── test_events.py            water years, return levels, exceedance counting, regime ordering
 │   └── test_app.py               the Streamlit app renders every tab, with basin and model switching
 │
@@ -253,7 +256,9 @@ setup. Five tabs:
    false alarms per model. Clearly labelled as not an official flood stage.
 5. **Methods & glossary** — exact inputs, target, split, loss, model sizes; plain-English definitions.
 
-Run: `streamlit run app/streamlit_app.py --server.port 8502`.
+Run: `streamlit run app/streamlit_app.py --server.port 8502`. If `data/camels_us/` is missing (fresh clone, Streamlit
+Community Cloud), the app runs `scripts/download_data.py` itself on first start. Deploy on Streamlit Community Cloud
+with `app/streamlit_app.py` as the main file; it then installs `app/requirements.txt` (no PyTorch needed).
 
 ---
 

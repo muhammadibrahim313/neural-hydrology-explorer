@@ -239,9 +239,30 @@ st.title("🌊 Neural Hydrology Explorer")
 st.caption("weather (rain, temperature, radiation, humidity) + static basin attributes → LSTM / Transformer → "
            "daily streamflow → observed vs predicted hydrograph → NSE / KGE → educational flood thresholds")
 
-if not (CAMELS_DIR / "camels_attributes_v2.0").exists():
-    st.error("No data found. Run `python scripts/download_data.py` first.")
-    st.stop()
+def ensure_data() -> None:
+    """First start on a fresh clone or on Streamlit Cloud: fetch the ~10 MB of basin data automatically."""
+    have_attrs = (CAMELS_DIR / "camels_attributes_v2.0" / "camels_topo.txt").exists()
+    have_flow = any(CAMELS_DIR.glob("usgs_streamflow/**/*_streamflow_qc.txt"))
+    if have_attrs and have_flow:
+        return
+    st.info("First run: the six CAMELS-US basins are not on this machine yet. Downloading about 10 MB from the "
+            "official NCAR archive on Zenodo (this takes one to two minutes and happens only once).")
+    with st.status("Downloading CAMELS-US data ...", expanded=True) as status:
+        import subprocess
+
+        proc = subprocess.run([sys.executable, str(ROOT / "scripts" / "download_data.py")],
+                              capture_output=True, text=True, cwd=str(ROOT))
+        st.code((proc.stdout + proc.stderr)[-3000:], language="text")
+        if proc.returncode != 0:
+            status.update(label="Download failed. See the log above; run `python scripts/download_data.py` manually.",
+                          state="error")
+            st.stop()
+        status.update(label="Data ready.", state="complete")
+    st.cache_data.clear()
+    st.rerun()
+
+
+ensure_data()
 
 basins = get_basins()
 names = get_names()
