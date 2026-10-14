@@ -1,4 +1,4 @@
-"""nhplay: small helper package for the Neural Hydrology Playground.
+"""nhplay: small helper package for Neural Hydrology Explorer.
 
 The heavy lifting (datasets, LSTM/Transformer models, training loop) is done by the
 NeuralHydrology library. This package only adds the thin, readable layer needed for a

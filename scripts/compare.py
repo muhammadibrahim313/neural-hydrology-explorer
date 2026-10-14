@@ -78,6 +78,7 @@ def main() -> None:
                      savepath=FIGURE_DIR / "compare_kge.png")
 
     info = {m: describe_run(p) for m, p in runs.items()}
+    pd.DataFrame(info).T.rename_axis("model").to_csv(METRIC_DIR / "run_details.csv")
     md = ["# LSTM vs Transformer (" + args.period + " period: " + "2004-10-01 to 2014-09-30" + ")\n",
           "## Median over the six basins\n", summary.to_markdown(), "\n",
           "## Per basin\n", markdown_table(table),

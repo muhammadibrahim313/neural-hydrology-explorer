@@ -5,11 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "nhplay"
 version = "0.1.0"
-description = "Neural Hydrology Playground: a small, readable LSTM-vs-Transformer rainfall-runoff learning project built on NeuralHydrology and CAMELS-US."
+description = "Neural Hydrology Explorer: a small, readable LSTM-vs-Transformer rainfall-runoff learning project built on NeuralHydrology and CAMELS-US."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "Neural Hydrology Playground contributors" }]
+authors = [{ name = "Neural Hydrology Explorer contributors" }]
 keywords = ["hydrology", "streamflow", "LSTM", "transformer", "neuralhydrology", "CAMELS"]
 dependencies = [
   "torch>=2.2",

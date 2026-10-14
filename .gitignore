@@ -43,8 +43,8 @@ runs/
 *.ckpt
 events.out.tfevents.*
 
-# ---- Large generated outputs (figures/metrics below are small and ARE committed) ----
-outputs/predictions/*.csv
+# ---- Generated outputs: figures, metrics and the two ~0.7 MB prediction CSVs ARE committed so the app
+# ---- and notebook work right after cloning; anything bigger stays out.
 outputs/predictions/*.nc
 
 # ---- Tooling / OS ----
@@ -55,3 +55,7 @@ Thumbs.db
 *.log
 *.tmp
 .streamlit/secrets.toml
+
+# ---- Agent-skill symlinks that Streamlit auto-creates into .venv (machine specific) ----
+.agents/
+.claude/

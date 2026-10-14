@@ -99,6 +99,12 @@ def get_run_details() -> pd.DataFrame | None:
         except Exception:
             continue
     if not rows:
+        f = METRIC_DIR / "run_details.csv"
+        if f.exists():
+            df = pd.read_csv(f, index_col=0)
+            df.index = [LABELS.get(i, i) for i in df.index]
+            df.index.name = "model"
+            return df
         return None
     df = pd.DataFrame(rows).T
     df.index.name = "model"
@@ -178,6 +184,7 @@ def metric_bar_figure(table: pd.DataFrame, metric: str, title: str) -> go.Figure
         fig.add_trace(go.Bar(x=sub["basin"], y=sub[metric], name=LABELS[m], marker_color=COLORS[m],
                              text=sub[metric].map(lambda v: f"{v:.2f}"), textposition="outside",
                              hovertemplate="basin %{x}<br>" + LABELS[m] + " " + metric.upper() + " %{y:.3f}<extra></extra>"))
+    fig.update_xaxes(type="category")  # gauge ids are labels, not numbers (otherwise Plotly prints '5M', '10M')
     fig.update_layout(title=title, barmode="group", height=360, yaxis_title=metric.upper(), xaxis_title="USGS gauge",
                       legend=dict(orientation="h", y=1.12, x=0), margin=dict(l=10, r=10, t=60, b=10))
     fig.add_hline(y=0, line=dict(color=COLORS["muted"], width=1))
@@ -190,7 +197,7 @@ def scatter_figure(obs: pd.Series, sims: dict[str, pd.Series], title: str) -> go
     fig.add_trace(go.Scatter(x=[0, hi], y=[0, hi], mode="lines", name="1:1 line", line=dict(color=COLORS["muted"], dash="dash")))
     for m, s in sims.items():
         s = s.reindex(obs.index)
-        fig.add_trace(go.Scattergl(x=obs.values, y=s.values, mode="markers", name=LABELS[m],
+        fig.add_trace(go.Scatter(x=obs.values, y=s.values, mode="markers", name=LABELS[m],
                                    marker=dict(size=5, color=COLORS[m], opacity=0.45),
                                    hovertemplate="observed %{x:.2f}<br>" + LABELS[m] + " %{y:.2f}<extra></extra>"))
     fig.update_layout(title=title, height=380, xaxis_title="observed mm/day", yaxis_title="predicted mm/day",
